@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Распределение долей расходов</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7f6;
+      --surface: #ffffff;
+      --surface-soft: #eef4f2;
+      --ink: #17211f;
+      --muted: #62716d;
+      --line: #d7e0dd;
+      --food: #d75b4d;
+      --clothes: #2e7d72;
+      --utilities: #b7791f;
+      --shadow: 0 18px 46px rgba(24, 40, 36, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(244, 247, 246, 0.95)),
+        repeating-linear-gradient(90deg, rgba(23, 33, 31, 0.035) 0 1px, transparent 1px 72px),
+        repeating-linear-gradient(180deg, rgba(23, 33, 31, 0.035) 0 1px, transparent 1px 72px),
+        var(--bg);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    .report-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      padding: 0 0 22px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: 34px;
+      line-height: 1.14;
+      font-weight: 780;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .sample {
+      min-width: 168px;
+      padding: 14px 18px;
+      border-left: 4px solid var(--clothes);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .sample span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .sample strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      margin: 24px 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .metric {
+      min-height: 112px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .metric b {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .cards {
+      display: grid;
+      gap: 22px;
+    }
+
+    .card {
+      display: grid;
+      grid-template-columns: minmax(240px, 0.72fr) minmax(420px, 1.28fr);
+      gap: 24px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .question {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .code {
+      width: fit-content;
+      padding: 5px 9px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.22;
+    }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .peak {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .peak span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .peak strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--accent);
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .chart {
+      min-width: 0;
+    }
+
+    .rows {
+      display: grid;
+      gap: 9px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: minmax(92px, 160px) minmax(160px, 1fr) 54px 64px;
+      gap: 12px;
+      align-items: center;
+      min-height: 34px;
+    }
+
+    .label {
+      font-size: 14px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .track {
+      height: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      box-shadow: inset 0 0 0 1px rgba(23, 33, 31, 0.06);
+    }
+
+    .fill {
+      width: var(--w);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+
+    .percent,
+    .count {
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .percent {
+      font-weight: 800;
+    }
+
+    .count {
+      color: var(--muted);
+    }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .food {
+      --accent: var(--food);
+    }
+
+    .clothes {
+      --accent: var(--clothes);
+    }
+
+    .utilities {
+      --accent: var(--utilities);
+    }
+
+    @media (max-width: 860px) {
+      .report-head,
+      .card {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .sample {
+        width: 100%;
+      }
+
+      .row {
+        grid-template-columns: minmax(88px, 132px) minmax(96px, 1fr) 48px 58px;
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        width: min(100% - 20px, 1180px);
+        padding-top: 20px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      .row {
+        grid-template-columns: 1fr 48px 56px;
+      }
+
+      .track {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: 100%;
+        padding: 0;
+      }
+
+      .card,
+      .sample {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="report-head">
+      <div>
+        <h1>Распределение долей расходов респондентов</h1>
+        <p class="subtitle">Сводка по трем категориям: продукты питания, одежда и обувь, коммунальные услуги за последний месяц.</p>
+      </div>
+      <div class="sample" aria-label="Объем выборки">
+        <span>Ответов</span>
+        <strong>2300</strong>
+      </div>
+    </header>
+
+    <section class="summary" aria-label="Ключевые значения">
+      <div class="metric">
+        <b>Продукты питания</b>
+        <strong>50% тратят 20-40%</strong>
+        <span>Две соседние группы формируют половину всех ответов.</span>
+      </div>
+      <div class="metric">
+        <b>Одежда и обувь</b>
+        <strong>67% тратят до 10%</strong>
+        <span>Основная часть расходов находится в низком диапазоне.</span>
+      </div>
+      <div class="metric">
+        <b>Коммунальные услуги</b>
+        <strong>64% тратят 5-20%</strong>
+        <span>Самая плотная зона распределения лежит в среднем диапазоне.</span>
+      </div>
+    </section>
+
+    <section class="cards" aria-label="Детальные распределения">
+      <article class="card food">
+        <div class="question">
+          <span class="code">N13</span>
+          <h2>Какую долю своего дохода Вы тратите на покупку продуктов питания?</h2>
+          <p class="note">Последний месяц. Данные показывают заметную концентрацию в диапазонах от 20% до 50% дохода.</p>
+          <div class="peak">
+            <span>Максимум</span>
+            <strong>30-40% - 583 ответа</strong>
+          </div>
+        </div>
+        <div class="chart" role="img" aria-label="Распределение расходов на продукты питания">
+          <div class="rows">
+            <div class="row"><div class="label">Менее 20%</div><div class="track"><div class="fill" style="--w: 8%;"></div></div><div class="percent">8%</div><div class="count">185</div></div>
+            <div class="row"><div class="label">20-30%</div><div class="track"><div class="fill" style="--w: 25%;"></div></div><div class="percent">25%</div><div class="count">564</div></div>
+            <div class="row"><div class="label">30-40%</div><div class="track"><div class="fill" style="--w: 25%;"></div></div><div class="percent">25%</div><div class="count">583</div></div>
+            <div class="row"><div class="label">40-50%</div><div class="track"><div class="fill" style="--w: 19%;"></div></div><div class="percent">19%</div><div class="count">448</div></div>
+            <div class="row"><div class="label">50-60%</div><div class="track"><div class="fill" style="--w: 14%;"></div></div><div class="percent">14%</div><div class="count">315</div></div>
+            <div class="row"><div class="label">60-80%</div><div class="track"><div class="fill" style="--w: 7%;"></div></div><div class="percent">7%</div><div class="count">158</div></div>
+            <div class="row"><div class="label">Более 80%</div><div class="track"><div class="fill" style="--w: 2%;"></div></div><div class="percent">2%</div><div class="count">47</div></div>
+          </div>
+          <div class="total"><span>Total Responses</span><span>2300</span></div>
+        </div>
+      </article>
+
+      <article class="card clothes">
+        <div class="question">
+          <span class="code">N14</span>
+          <h2>Какую долю своего дохода Вы тратите на покупку одежды и обуви?</h2>
+          <p class="note">Последний месяц. Распределение смещено к низким значениям, почти все ответы ниже 20% дохода.</p>
+          <div class="peak">
+            <span>Максимум</span>
+            <strong>5-10% - 811 ответов</strong>
+          </div>
+        </div>
+        <div class="chart" role="img" aria-label="Распределение расходов на одежду и обувь">
+          <div class="rows">
+            <div class="row"><div class="label">Менее 5%</div><div class="track"><div class="fill" style="--w: 32%;"></div></div><div class="percent">32%</div><div class="count">736</div></div>
+            <div class="row"><div class="label">5-10%</div><div class="track"><div class="fill" style="--w: 35%;"></div></div><div class="percent">35%</div><div class="count">811</div></div>
+            <div class="row"><div class="label">10-15%</div><div class="track"><div class="fill" style="--w: 21%;"></div></div><div class="percent">21%</div><div class="count">478</div></div>
+            <div class="row"><div class="label">15-20%</div><div class="track"><div class="fill" style="--w: 8%;"></div></div><div class="percent">8%</div><div class="count">191</div></div>
+            <div class="row"><div class="label">20-30%</div><div class="track"><div class="fill" style="--w: 3%;"></div></div><div class="percent">3%</div><div class="count">61</div></div>
+            <div class="row"><div class="label">Более 30%</div><div class="track"><div class="fill" style="--w: 1%;"></div></div><div class="percent">1%</div><div class="count">23</div></div>
+          </div>
+          <div class="total"><span>Total Responses</span><span>2300</span></div>
+        </div>
+      </article>
+
+      <article class="card utilities">
+        <div class="question">
+          <span class="code">N15</span>
+          <h2>Какую долю своего дохода Вы тратите на оплату коммунальных услуг?</h2>
+          <p class="note">Последний месяц. Наиболее частый ответ - диапазон 5-10%, но существенная доля приходится и на 10-20%.</p>
+          <div class="peak">
+            <span>Максимум</span>
+            <strong>5-10% - 844 ответа</strong>
+          </div>
+        </div>
+        <div class="chart" role="img" aria-label="Распределение расходов на коммунальные услуги">
+          <div class="rows">
+            <div class="row"><div class="label">Менее 5%</div><div class="track"><div class="fill" style="--w: 14%;"></div></div><div class="percent">14%</div><div class="count">313</div></div>
+            <div class="row"><div class="label">5-10%</div><div class="track"><div class="fill" style="--w: 37%;"></div></div><div class="percent">37%</div><div class="count">844</div></div>
+            <div class="row"><div class="label">10-20%</div><div class="track"><div class="fill" style="--w: 27%;"></div></div><div class="percent">27%</div><div class="count">628</div></div>
+            <div class="row"><div class="label">20-30%</div><div class="track"><div class="fill" style="--w: 15%;"></div></div><div class="percent">15%</div><div class="count">335</div></div>
+            <div class="row"><div class="label">Более 30%</div><div class="track"><div class="fill" style="--w: 8%;"></div></div><div class="percent">8%</div><div class="count">180</div></div>
+          </div>
+          <div class="total"><span>Total Responses</span><span>2300</span></div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
